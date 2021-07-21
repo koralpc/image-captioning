@@ -4,6 +4,7 @@ from src.loss import loss_function
 import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
+from src.preprocess import image_features_extract_model
 
 class Attention(tf.keras.Model):
     def __init__(self, units):
@@ -43,19 +44,10 @@ class CNN_Encoder(tf.keras.Model):
     # This encoder passes those features through a Fully connected layer
     def __init__(self, embedding_dim):
         super(CNN_Encoder, self).__init__()
-        image_model = tf.keras.applications.InceptionV3(
-            include_top=False, weights="imagenet"
-        )
-        new_input = image_model.input
-        hidden_layer = image_model.layers[-1].output
-
-        self.image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
         # shape after fc == (batch_size, 64, embedding_dim)
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
     def call(self, x):
-        x = self.image_features_extract_model(x)
-        x = tf.reshape(x, (x.shape[0], -1, x.shape[3]))
         x = self.fc(x)
         x = tf.nn.relu(x)
         return x
@@ -144,8 +136,11 @@ class EDModel(tf.keras.Model):
 
             hidden = self.decoder.reset_state(batch_size=1)
 
-            temp_input = tf.expand_dims(load_image(target)[0], 0)
-
+            temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
+            img_tensor_val = image_features_extract_model(temp_input)
+            img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0],
+                                                            -1,
+                                                            img_tensor_val.shape[3]))
             features = self.encoder(temp_input)
 
             dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)

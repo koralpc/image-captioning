@@ -1,3 +1,4 @@
+from src.utils import load_image
 import time
 import tensorflow as tf
 
