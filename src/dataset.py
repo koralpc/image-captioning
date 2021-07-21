@@ -11,6 +11,7 @@ import random
 from collections import defaultdict
 from src.utils import load_image
 from src.preprocess import image_features_extract_model
+from tqdm import tqdm
 
 class ImageCaptionDataset:
     def __init__(self, images_url, annotations_url) -> None:
@@ -49,14 +50,14 @@ class ImageCaptionDataset:
             image_path = os.path.abspath(".") + image_folder
         return annotation_file, image_path
 
-    def load_dataset(self, annotation_file, image_path, limit_size=6000):
+    def load_dataset(self, annotation_file, base_image_path, limit_size=6000):
         with open(annotation_file, "r") as f:
             annotations = json.load(f)
         image_path_to_caption = defaultdict(list)
         for val in annotations["annotations"]:
             caption = f"<start> {val['caption']} <end>"
             image_path = (
-                image_path + "COCO_train2014_" + "%012d.jpg" % (val["image_id"])
+                base_image_path + "COCO_train2014_" + "%012d.jpg" % (val["image_id"])
             )
             image_path_to_caption[image_path].append(caption)
         image_paths = list(image_path_to_caption.keys())
@@ -134,7 +135,7 @@ class ImageCaptionDataset:
         image_dataset = image_dataset.map(
         load_image, num_parallel_calls=tf.data.AUTOTUNE).batch(16)
 
-        for img, path in image_dataset:
+        for img, path in tqdm(image_dataset):
             batch_features = image_features_extract_model(img)
             batch_features = tf.reshape(batch_features,
                                         (batch_features.shape[0], -1, batch_features.shape[3]))
