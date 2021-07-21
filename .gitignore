@@ -25,6 +25,9 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+image_captioning/
+src/annotations/
+src/train2014/
 MANIFEST
 
 # PyInstaller
