@@ -82,11 +82,13 @@ class Trainer:
             self.ckpt.restore(self.ckpt_manager.latest_checkpoint)
         rid = np.random.randint(0, len(img_name_val))
         image = img_name_val[rid]
+        caption = cap_val[rid]
         real_caption = ' '.join([model.tokenizer.index_word[i]
                         for i in cap_val[rid] if i not in [0]])
+        
         result, attn_plot = model(
             image,
-            real_caption,
+            caption,
             mode="eval",
             max_length=self.train_config["max_length"],
             attn_shape=self.train_config["attn_shape"],

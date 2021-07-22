@@ -5,6 +5,7 @@ import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
 from src.preprocess import image_features_extract_model
+from src.utils import load_image
 
 class Attention(tf.keras.Model):
     def __init__(self, units):
@@ -106,6 +107,7 @@ class EDModel(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_func = loss_function
         self.tokenizer = tokenizer
+        self.trainable_variables = self.encoder.trainable_variables + self.decoder.trainable_variables
 
     def call(self, img_tensor, target, max_length=None, attn_shape=None, mode="train"):
         if mode == "train":
@@ -135,8 +137,12 @@ class EDModel(tf.keras.Model):
             attention_plot = np.zeros((max_length, attn_shape))
 
             hidden = self.decoder.reset_state(batch_size=1)
-
-            features = self.encoder(img_tensor)
+            temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
+            img_tensor_val = image_features_extract_model(temp_input)
+            img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0],
+                                                        -1,
+                                                        img_tensor_val.shape[3]))
+            features = self.encoder(img_tensor_val)
 
             dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
             result = []
