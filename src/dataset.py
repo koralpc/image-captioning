@@ -1,5 +1,5 @@
 from keras_preprocessing.text import Tokenizer
-from preprocess import Preprocess
+from src.preprocess import Preprocess
 import numpy as np
 import os
 import PIL
