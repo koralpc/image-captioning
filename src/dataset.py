@@ -140,17 +140,17 @@ class ImageCaptionDataset:
             batch_features = tf.reshape(batch_features,
                                         (batch_features.shape[0], -1, batch_features.shape[3]))
 
-        for bf, p in zip(batch_features, path):
-            path_of_feature = p.numpy().decode("utf-8")
-            np.save(path_of_feature, bf.numpy())
+            for bf, p in zip(batch_features, path):
+                path_of_feature = p.numpy().decode("utf-8")
+                np.save(path_of_feature, bf.numpy())
 
-    def prepare_data(self, limit_size, buffer_size, batch_size):
+    def prepare_data(self, limit_size, buffer_size, batch_size,top_k):
         annotation_file, image_path = self._fetch_dataset()
         train_captions, img_name_vector = self.load_dataset(
             annotation_file, image_path, limit_size=limit_size
         )
         self.preprocess_features(img_name_vector)
-        cap_vector, max_length, tokenizer = Preprocess.tokenize(train_captions)
+        cap_vector, max_length, tokenizer = Preprocess.tokenize(train_captions,top_k)
         img_name_train, cap_train, img_name_val, cap_val = self.split_dataset(
             img_name_vector, cap_vector
         )
