@@ -21,7 +21,7 @@ class Trainer:
 
         total_loss = loss / int(target.shape[1])
 
-        trainable_variables = model.trainable_vars
+        trainable_variables = model.trainable_variables
 
         gradients = tape.gradient(loss, trainable_variables)
 
