@@ -136,12 +136,7 @@ class EDModel(tf.keras.Model):
 
             hidden = self.decoder.reset_state(batch_size=1)
 
-            temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
-            img_tensor_val = image_features_extract_model(temp_input)
-            img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0],
-                                                            -1,
-                                                            img_tensor_val.shape[3]))
-            features = self.encoder(temp_input)
+            features = self.encoder(img_tensor)
 
             dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
             result = []
