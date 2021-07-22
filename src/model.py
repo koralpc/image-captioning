@@ -107,7 +107,7 @@ class EDModel(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_func = loss_function
         self.tokenizer = tokenizer
-        self.trainable_variables = self.encoder.trainable_variables + self.decoder.trainable_variables
+        self.trainable_vars = self.encoder.trainable_variables + self.decoder.trainable_variables
 
     def call(self, img_tensor, target, max_length=None, attn_shape=None, mode="train"):
         if mode == "train":
