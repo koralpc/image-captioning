@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from src.preprocess import image_features_extract_model
 from src.utils import load_image
 
+
 class Attention(tf.keras.Model):
     def __init__(self, units):
         super(Attention, self).__init__()
@@ -71,7 +72,8 @@ class RNN_Decoder(tf.keras.Model):
 
         self.attention = Attention(self.units)
 
-    def call(self, x, features, hidden):
+    def call(self, input_features):
+        x, features, hidden = input_features
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
 
@@ -107,9 +109,12 @@ class EDModel(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_func = loss_function
         self.tokenizer = tokenizer
-        self.trainable_vars = self.encoder.trainable_variables + self.decoder.trainable_variables
+        self.trainable_vars = (
+            self.encoder.trainable_variables + self.decoder.trainable_variables
+        )
 
-    def call(self, img_tensor, target, max_length=None, attn_shape=None, mode="train"):
+    def call(self, inputs, max_length=None, attn_shape=None, mode="train"):
+        img_tensor, target = inputs
         if mode == "train":
             loss = 0
 
@@ -139,9 +144,9 @@ class EDModel(tf.keras.Model):
             hidden = self.decoder.reset_state(batch_size=1)
             temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
             img_tensor_val = image_features_extract_model(temp_input)
-            img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0],
-                                                        -1,
-                                                        img_tensor_val.shape[3]))
+            img_tensor_val = tf.reshape(
+                img_tensor_val, (img_tensor_val.shape[0], -1, img_tensor_val.shape[3])
+            )
             features = self.encoder(img_tensor_val)
 
             dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
@@ -165,7 +170,7 @@ class EDModel(tf.keras.Model):
             attention_plot = attention_plot[: len(result), :]
             return result, attention_plot
 
-    def plot_attention(self,image, result, attention_plot):
+    def plot_attention(self, image, result, attention_plot):
         temp_image = np.array(Image.open(image))
 
         fig = plt.figure(figsize=(10, 10))
@@ -173,11 +178,11 @@ class EDModel(tf.keras.Model):
         len_result = len(result)
         for i in range(len_result):
             temp_att = np.resize(attention_plot[i], (8, 8))
-            grid_size = max(np.ceil(len_result/2), 2)
-            ax = fig.add_subplot(grid_size, grid_size, i+1)
+            grid_size = max(np.ceil(len_result / 2), 2)
+            ax = fig.add_subplot(grid_size, grid_size, i + 1)
             ax.set_title(result[i])
             img = ax.imshow(temp_image)
-            ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
+            ax.imshow(temp_att, cmap="gray", alpha=0.6, extent=img.get_extent())
 
         plt.tight_layout()
         plt.show()

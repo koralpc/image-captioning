@@ -13,6 +13,7 @@ from src.utils import load_image
 from src.preprocess import image_features_extract_model
 from tqdm import tqdm
 
+
 class ImageCaptionDataset:
     def __init__(self, images_url, annotations_url) -> None:
         self.images_url = images_url
@@ -133,24 +134,26 @@ class ImageCaptionDataset:
         # Feel free to change batch_size according to your system configuration
         image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
         image_dataset = image_dataset.map(
-        load_image, num_parallel_calls=tf.data.AUTOTUNE).batch(16)
+            load_image, num_parallel_calls=tf.data.AUTOTUNE
+        ).batch(16)
 
         for img, path in tqdm(image_dataset):
             batch_features = image_features_extract_model(img)
-            batch_features = tf.reshape(batch_features,
-                                        (batch_features.shape[0], -1, batch_features.shape[3]))
+            batch_features = tf.reshape(
+                batch_features, (batch_features.shape[0], -1, batch_features.shape[3])
+            )
 
             for bf, p in zip(batch_features, path):
                 path_of_feature = p.numpy().decode("utf-8")
                 np.save(path_of_feature, bf.numpy())
 
-    def prepare_data(self, limit_size, buffer_size, batch_size,top_k):
+    def prepare_data(self, limit_size, buffer_size, batch_size, top_k):
         annotation_file, image_path = self._fetch_dataset()
         train_captions, img_name_vector = self.load_dataset(
             annotation_file, image_path, limit_size=limit_size
         )
         self.preprocess_features(img_name_vector)
-        cap_vector, max_length, tokenizer = Preprocess.tokenize(train_captions,top_k)
+        cap_vector, max_length, tokenizer = Preprocess.tokenize(train_captions, top_k)
         img_name_train, cap_train, img_name_val, cap_val = self.split_dataset(
             img_name_vector, cap_vector
         )

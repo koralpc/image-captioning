@@ -3,6 +3,7 @@ import time
 import tensorflow as tf
 import numpy as np
 
+
 class Trainer:
     def __init__(self, checkpoint_path, train_config) -> None:
         self.checkpoint_path = checkpoint_path
@@ -17,7 +18,7 @@ class Trainer:
     @tf.function
     def train_step(self, model, img_tensor, target):
         with tf.GradientTape() as tape:
-            loss, _ = model(img_tensor, target)
+            loss, _ = model((img_tensor, target))
 
         total_loss = loss / int(target.shape[1])
 
@@ -62,38 +63,23 @@ class Trainer:
             print(f"Epoch {epoch+1} Loss {total_loss/num_steps:.6f}")
             print(f"Time taken for 1 epoch {time.time()-start:.2f} sec\n")
 
-    def eval(self, model, test_dataset):
-        for (batch, (img_tensor, target)) in enumerate(test_dataset):
-            real_caption = ' '.join([model.tokenizer.index_word[i]
-                                    for i in cap_val[rid] if i not in [0]])
-            result, attn_plot = model(
-                target,
-                mode="eval",
-                max_length=self.train_config["max_length"],
-                attn_shape=self.train_config["attn_shape"],
-            )
-
-            print('Real Caption:', real_caption)
-            print('Prediction Caption:', ' '.join(result))
-            plot_attention(image, result, attention_plot)
-
-    def eval_single(self,model,cap_val,img_name_val,visualise=True):
+    def eval_single(self, model, cap_val, img_name_val, visualise=True):
         if self.ckpt_manager.latest_checkpoint:
             self.ckpt.restore(self.ckpt_manager.latest_checkpoint)
         rid = np.random.randint(0, len(img_name_val))
         image = img_name_val[rid]
         caption = cap_val[rid]
-        real_caption = ' '.join([model.tokenizer.index_word[i]
-                        for i in cap_val[rid] if i not in [0]])
-        
+        real_caption = " ".join(
+            [model.tokenizer.index_word[i] for i in cap_val[rid] if i not in [0]]
+        )
+
         result, attn_plot = model(
-            image,
-            caption,
+            (image, caption),
             mode="eval",
             max_length=self.train_config["max_length"],
             attn_shape=self.train_config["attn_shape"],
         )
-        print('Real Caption:', real_caption)
-        print('Prediction Caption:', ' '.join(result))
+        print("Real Caption:", real_caption)
+        print("Prediction Caption:", " ".join(result))
         if visualise:
             model.plot_attention(image, result, attn_plot)

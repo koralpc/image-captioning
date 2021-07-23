@@ -21,12 +21,21 @@ features_shape = 2048
 attention_features_shape = 64
 checkpoint_dir = "./checkpoints/train"
 caption_dataset = ImageCaptionDataset(img_url, annotation_url)
-train_data, val_data, max_len, tokenizer = caption_dataset.prepare_data(limit_size, buffer_size, batch_size)
-model = EDModel(embedding_dim,units,vocab_size,tokenizer)
-train_config = dict(buffer_size=buffer_size,limit_size=limit_size,batch_size=batch_size,max_length=max_len,attn_shape=attention_features_shape)
+train_data, val_data, max_len, tokenizer = caption_dataset.prepare_data(
+    limit_size, buffer_size, batch_size
+)
+model = EDModel(embedding_dim, units, vocab_size, tokenizer)
+train_config = dict(
+    buffer_size=buffer_size,
+    limit_size=limit_size,
+    batch_size=batch_size,
+    max_length=max_len,
+    attn_shape=attention_features_shape,
+)
 trainer = Trainer(checkpoint_path=checkpoint_dir)
+
 
 def main():
     num_steps = len(train_data) // batch_size
-    ckpt,ckpt_manager = trainer.set_checkpoint(model)
-    trainer.train(model,train_data,ckpt,ckpt_manager,num_epochs,num_steps)
+    ckpt, ckpt_manager = trainer.set_checkpoint(model)
+    trainer.train(model, train_data, ckpt, ckpt_manager, num_epochs, num_steps)
