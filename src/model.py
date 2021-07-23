@@ -49,7 +49,7 @@ class CNN_Encoder(tf.keras.Model):
         # shape after fc == (batch_size, 64, embedding_dim)
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
-    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 64, features_shape],)])
+    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 64, 2048],)])
     def __call__(self, x):
         x = self.fc(x)
         x = tf.nn.relu(x)
@@ -73,7 +73,7 @@ class RNN_Decoder(tf.keras.Model):
 
         self.attention = Attention(self.units)
 
-    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 1], dtype=tf.int32), tf.TensorSpec(shape=[1, 64, 256], dtype=tf.float32),tf.TensorSpec(shape=[1, 512], dtype=tf.float32)])
+    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 1], dtype=tf.int32), tf.TensorSpec(shape=[1, 64, 512], dtype=tf.float32),tf.TensorSpec(shape=[1, 1024], dtype=tf.float32)])
     def __call__(self, x, features, hidden):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
