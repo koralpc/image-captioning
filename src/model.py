@@ -49,7 +49,8 @@ class CNN_Encoder(tf.keras.Model):
         # shape after fc == (batch_size, 64, embedding_dim)
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
-    def call(self, x):
+    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 64, features_shape],)])
+    def __call__(self, x):
         x = self.fc(x)
         x = tf.nn.relu(x)
         return x
@@ -72,8 +73,8 @@ class RNN_Decoder(tf.keras.Model):
 
         self.attention = Attention(self.units)
 
-    def call(self, input_features):
-        x, features, hidden = input_features
+    @tf.function(input_signature = [tf.TensorSpec(shape=[1, 1], dtype=tf.int32), tf.TensorSpec(shape=[1, 64, 256], dtype=tf.float32),tf.TensorSpec(shape=[1, 512], dtype=tf.float32)])
+    def __call__(self, x, features, hidden):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
 
@@ -112,8 +113,7 @@ class EDModel(tf.keras.Model):
         self.trainable_vars = (
             self.encoder.trainable_variables + self.decoder.trainable_variables
         )
-
-    def call(self, inputs, max_length=None, attn_shape=None, mode="train"):
+    def __call__(self, inputs, max_length=None, attn_shape=None, mode="train"):
         img_tensor, target = inputs
         if mode == "train":
             loss = 0
@@ -130,7 +130,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(1, target.shape[1]):
                 # passing the features through the decoder
-                predictions, hidden, _ = self.decoder((dec_input, features, hidden))
+                predictions, hidden, _ = self.decoder(dec_input, features, hidden)
 
                 loss += self.loss_func(target[:, i], predictions)
 
@@ -154,7 +154,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(max_length):
                 predictions, hidden, attention_weights = self.decoder(
-                    (dec_input, features, hidden)
+                    dec_input, features, hidden
                 )
 
                 attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
