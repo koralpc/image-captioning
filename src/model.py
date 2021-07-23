@@ -130,7 +130,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(1, target.shape[1]):
                 # passing the features through the decoder
-                predictions, hidden, _ = self.decoder(dec_input, features, hidden)
+                predictions, hidden, _ = self.decoder((dec_input, features, hidden))
 
                 loss += self.loss_func(target[:, i], predictions)
 
@@ -154,7 +154,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(max_length):
                 predictions, hidden, attention_weights = self.decoder(
-                    dec_input, features, hidden
+                    (dec_input, features, hidden)
                 )
 
                 attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
