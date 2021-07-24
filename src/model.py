@@ -50,7 +50,7 @@ class CNN_Encoder(tf.keras.Model):
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
     @tf.function
-    def call(self, x):
+    def call(self, x, training=True):
         x = self.fc(x)
         x = tf.nn.relu(x)
         return x
@@ -74,7 +74,8 @@ class RNN_Decoder(tf.keras.Model):
         self.attention = Attention(self.units)
 
     @tf.function
-    def call(self, x, features, hidden):
+    def call(self, inputs, training=True):
+        x, features, hidden = inputs
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
 
@@ -114,7 +115,7 @@ class EDModel(tf.keras.Model):
             self.encoder.trainable_variables + self.decoder.trainable_variables
         )
     @tf.function
-    def call(self, inputs, max_length=None, attn_shape=None, mode="train"):
+    def call(self, inputs, training=True,max_length=None, attn_shape=None, mode="train"):
         img_tensor, target = inputs
         if mode == "train":
             loss = 0
@@ -131,7 +132,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(1, target.shape[1]):
                 # passing the features through the decoder
-                predictions, hidden, _ = self.decoder(dec_input, features, hidden)
+                predictions, hidden, _ = self.decoder((dec_input, features, hidden))
 
                 loss += self.loss_func(target[:, i], predictions)
 
@@ -155,7 +156,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(max_length):
                 predictions, hidden, attention_weights = self.decoder(
-                    dec_input, features, hidden
+                    (dec_input, features, hidden)
                 )
 
                 attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
