@@ -49,8 +49,8 @@ class CNN_Encoder(tf.keras.Model):
         # shape after fc == (batch_size, 64, embedding_dim)
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
-    #@tf.function(input_signature = [tf.TensorSpec(shape=[None, 64, 2048],)])
-    def __call__(self, x):
+    @tf.function
+    def call(self, x):
         x = self.fc(x)
         x = tf.nn.relu(x)
         return x
@@ -73,8 +73,8 @@ class RNN_Decoder(tf.keras.Model):
 
         self.attention = Attention(self.units)
 
-    #@tf.function(input_signature = [tf.TensorSpec(shape=[64, 1], dtype=tf.int32), tf.TensorSpec(shape=[64, 64, 512], dtype=tf.float32),tf.TensorSpec(shape=[64, 1024], dtype=tf.float32)])
-    def __call__(self, x, features, hidden):
+    @tf.function
+    def call(self, x, features, hidden):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
 
@@ -113,7 +113,8 @@ class EDModel(tf.keras.Model):
         self.trainable_vars = (
             self.encoder.trainable_variables + self.decoder.trainable_variables
         )
-    def __call__(self, inputs, max_length=None, attn_shape=None, mode="train"):
+    @tf.function
+    def call(self, inputs, max_length=None, attn_shape=None, mode="train"):
         img_tensor, target = inputs
         if mode == "train":
             loss = 0
