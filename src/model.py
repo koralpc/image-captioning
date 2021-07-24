@@ -15,7 +15,9 @@ class Attention(tf.keras.Model):
         self.W2 = tf.keras.layers.Dense(units)
         self.V = tf.keras.layers.Dense(1)
 
-    def call(self, features, hidden):
+    @tf.function
+    def call(self, inputs,training=True):
+        features, hidden = inputs
         # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
 
         # hidden shape == (batch_size, hidden_size)
@@ -77,7 +79,7 @@ class RNN_Decoder(tf.keras.Model):
     def call(self, inputs, training=True):
         x, features, hidden = inputs
         # defining attention as a separate model
-        context_vector, attention_weights = self.attention(features, hidden)
+        context_vector, attention_weights = self.attention((features, hidden))
 
         # x shape after passing through embedding == (batch_size, 1, embedding_dim)
         x = self.embedding(x)
