@@ -106,7 +106,7 @@ class EDModel(tf.keras.Model):
     def __init__(self, embedding_dim, units, vocab_size, tokenizer):
         super(EDModel, self).__init__()
         self.encoder = CNN_Encoder(embedding_dim)
-        self.Cdecoder = RNN_Decoder(embedding_dim, units, vocab_size)
+        self.decoder = RNN_Decoder(embedding_dim, units, vocab_size)
         self.decoder_units = units
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_func = loss_function
