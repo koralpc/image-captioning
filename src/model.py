@@ -101,22 +101,20 @@ class RNN_Decoder(tf.keras.Model):
 
         return x, state, attention_weights
 
-    def reset_state(self, batch_size):
-        return tf.zeros((batch_size, self.units))
-
 
 class EDModel(tf.keras.Model):
     def __init__(self, embedding_dim, units, vocab_size, tokenizer):
         super(EDModel, self).__init__()
         self.encoder = CNN_Encoder(embedding_dim)
-        self.decoder = RNN_Decoder(embedding_dim, units, vocab_size)
+        self.Cdecoder = RNN_Decoder(embedding_dim, units, vocab_size)
+        self.decoder_units = units
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_func = loss_function
         self.tokenizer = tokenizer
         self.trainable_vars = (
             self.encoder.trainable_variables + self.decoder.trainable_variables
         )
-    @tf.function
+
     def call(self, inputs, training=True,max_length=None, attn_shape=None, mode="train"):
         img_tensor, target = inputs
         if mode == "train":
@@ -124,8 +122,8 @@ class EDModel(tf.keras.Model):
 
             # initializing the hidden state for each batch
             # because the captions are not related from image to image
-            hidden = self.decoder.reset_state(batch_size=target.shape[0])
-
+            #hidden = self.decoder.reset_state(batch_size=target.shape[0])
+            hidden = tf.zeros((target.shape[0], self.decoder_units))  
             dec_input = tf.expand_dims(
                 [self.tokenizer.word_index["<start>"]] * target.shape[0], 1
             )
@@ -145,7 +143,8 @@ class EDModel(tf.keras.Model):
         else:
             attention_plot = np.zeros((max_length, attn_shape))
 
-            hidden = self.decoder.reset_state(batch_size=1)
+            #hidden = self.decoder.reset_state(batch_size=1)
+            hidden = tf.zeros((1, self.decoder_units)) 
             temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
             img_tensor_val = image_features_extract_model(temp_input)
             img_tensor_val = tf.reshape(
