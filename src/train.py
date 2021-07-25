@@ -15,10 +15,9 @@ class Trainer:
             self.ckpt, self.checkpoint_path, max_to_keep=5
         )
 
-    @tf.function
     def train_step(self, model, img_tensor, target):
         with tf.GradientTape() as tape:
-            loss, _ = model((img_tensor, target))
+            loss, _ = model(img_tensor, target)
 
         total_loss = loss / int(target.shape[1])
 

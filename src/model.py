@@ -115,8 +115,7 @@ class EDModel(tf.keras.Model):
             self.encoder.trainable_variables + self.decoder.trainable_variables
         )
 
-    def call(self, inputs, training=True,max_length=None, attn_shape=None, mode="train"):
-        img_tensor, target = inputs
+    def call(self, img_tensor, target, training=True,max_length=None, attn_shape=None, mode="train"):
         if mode == "train":
             loss = 0
 
@@ -132,7 +131,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(1, target.shape[1]):
                 # passing the features through the decoder
-                predictions, hidden, _ = self.decoder((dec_input, features, hidden))
+                predictions, hidden, _ = self.decoder([dec_input, features, hidden])
 
                 loss += self.loss_func(target[:, i], predictions)
 
@@ -157,7 +156,7 @@ class EDModel(tf.keras.Model):
 
             for i in range(max_length):
                 predictions, hidden, attention_weights = self.decoder(
-                    (dec_input, features, hidden)
+                    [dec_input, features, hidden]
                 )
 
                 attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
