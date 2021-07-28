@@ -120,8 +120,8 @@ class ImageCaptioner(tf.Module):
                 attention_plot = tf.reshape(attention_weights, (-1,))
                 result = predicted_id
             else:
-                attention_plot = tf.stack([attention_plot, tf.reshape(attention_weights, (-1,))])
-                result = tf.stack([result,predicted_id])
+                attention_plot = tf.concat([attention_plot, tf.reshape(attention_weights, (-1,))],0)
+                result = tf.concat([result,predicted_id],0)
 
             # if self.tokenizer.index_word[predicted_id] == "<end>":
             #     return result, attention_plot
