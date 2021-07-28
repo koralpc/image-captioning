@@ -105,8 +105,8 @@ class ImageCaptioner(tf.Module):
         self.tokenizer = tokenizer
 
     @tf.function(input_signature=[tf.TensorSpec(dtype=tf.int32, shape=[1,64,2048])])
-    def caption(self, img_tensor, max_length=50, attn_shape=64):
-        attention_plot = np.zeros((max_length, attn_shape))
+    def caption(self, img_tensor, max_length=15, attn_shape=64):
+        attention_plot = list
         hidden = self.decoder.reset_state(batch_size=1)
         features = self.encoder(img_tensor)
 
@@ -118,13 +118,13 @@ class ImageCaptioner(tf.Module):
                 dec_input, features, hidden
             )
 
-            attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
+            attention_plot.append(tf.reshape(attention_weights, (-1,)))
 
-            predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
-            result.append(self.tokenizer.index_word[predicted_id])
+            predicted_id = tf.random.categorical(predictions, 1)[0][0]
+            result.append(predicted_id)
 
-            if self.tokenizer.index_word[predicted_id] == "<end>":
-                return result, attention_plot
+            # if self.tokenizer.index_word[predicted_id] == "<end>":
+            #     return result, attention_plot
 
             dec_input = tf.expand_dims([predicted_id], 0)
 
