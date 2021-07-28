@@ -109,7 +109,7 @@ class ImageCaptioner(tf.Module):
     @tf.function
     def caption(self, img_tensor, max_length=None, attn_shape=None):
         attention_plot = np.zeros((max_length, attn_shape))
-        hidden = self.decoder.reset_state(batch_size=target.shape[0])
+        hidden = self.decoder.reset_state(batch_size=1)
         temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
         img_tensor_val = self.image_features_extract_model(temp_input)
         img_tensor_val = tf.reshape(
