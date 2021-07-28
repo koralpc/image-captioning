@@ -6,12 +6,13 @@ import numpy as np
 
 
 class Trainer:
-    def __init__(self, checkpoint_path, train_config, encoder, decoder, optimizer) -> None:
+    def __init__(self, checkpoint_path, train_config, encoder, decoder, optimizer, tokenizer) -> None:
         self.checkpoint_path = checkpoint_path
         self.train_config = train_config
         self.encoder = encoder
         self.decoder = decoder
         self.optimizer = optimizer
+        self.tokenizer = tokenizer
 
     def set_checkpoint(self):
         self.ckpt = tf.train.Checkpoint(encoder=self.encoder,decoder=self.decoder,optimizer=self.optimizer)
@@ -34,7 +35,7 @@ class Trainer:
 
             for i in range(1, target.shape[1]):
                 # passing the features through the decoder
-                predictions, hidden, _ = self.decoder([dec_input, features, hidden])
+                predictions, hidden, _ = self.decoder(dec_input, features, hidden)
 
                 loss += loss_function(target[:, i], predictions)
 
