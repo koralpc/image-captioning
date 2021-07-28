@@ -129,7 +129,7 @@ class ImageCaptioner(tf.Module):
             dec_input = tf.expand_dims([predicted_id], 0)
 
         attention_plot = attention_plot[: len(result)]
-        return result, attention_plot
+        return {"predictions":result, "attention_plot":attention_plot}
 
     def plot_attention(self, image, result, attention_plot):
         temp_image = np.array(Image.open(image))
