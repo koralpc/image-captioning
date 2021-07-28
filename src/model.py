@@ -70,7 +70,7 @@ class RNN_Decoder(tf.keras.Model):
         self.fc1 = tf.keras.layers.Dense(self.units)
         self.fc2 = tf.keras.layers.Dense(vocab_size)
 
-        self.attention = Attention2(self.units)
+        self.attention = Attention(self.units)
 
     def call(self,inputs, training=True):
         x, features, hidden = inputs
