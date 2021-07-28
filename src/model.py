@@ -106,7 +106,7 @@ class ImageCaptioner(tf.Module):
 
     @tf.function(input_signature=[tf.TensorSpec(dtype=tf.int32, shape=[1,64,2048])])
     def caption(self, img_tensor, max_length=15, attn_shape=64):
-        attention_plot = list
+        attention_plot = []
         hidden = self.decoder.reset_state(batch_size=1)
         features = self.encoder(img_tensor)
 
