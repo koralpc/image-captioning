@@ -100,22 +100,16 @@ class RNN_Decoder(tf.keras.Model):
         return tf.zeros((batch_size, self.units))
 
 class ImageCaptioner(tf.Module):
-    def __init__(self, encoder, decoder , image_features_extract_model, tokenizer):
+    def __init__(self, encoder, decoder , tokenizer):
         self.encoder = encoder
         self.decoder = decoder
-        self.image_features_extract_model = image_features_extract_model
         self.tokenizer = tokenizer
 
-    @tf.function(input_signature=[tf.TensorSpec(dtype=tf.string, shape=[1, 64, 2048])])
+    @tf.function(input_signature=[tf.TensorSpec(dtype=tf.int32, shape=[1,64,2048])])
     def caption(self, img_tensor, max_length=50, attn_shape=64):
         attention_plot = np.zeros((max_length, attn_shape))
         hidden = self.decoder.reset_state(batch_size=1)
-        temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
-        img_tensor_val = self.image_features_extract_model(temp_input)
-        img_tensor_val = tf.reshape(
-            img_tensor_val, (img_tensor_val.shape[0], -1, img_tensor_val.shape[3])
-        )
-        features = self.encoder(img_tensor_val)
+        features = self.encoder(img_tensor)
 
         dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
         result = []
