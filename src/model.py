@@ -4,7 +4,6 @@ from src.loss import loss_function
 import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
-from src.preprocess import image_features_extract_model
 from src.utils import load_image
 
 
@@ -15,7 +14,6 @@ class Attention(tf.keras.Model):
         self.W2 = tf.keras.layers.Dense(units)
         self.V = tf.keras.layers.Dense(1)
 
-    @tf.function
     def call(self, inputs,training=True):
         features, hidden = inputs
         # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
@@ -51,7 +49,6 @@ class CNN_Encoder(tf.keras.Model):
         # shape after fc == (batch_size, 64, embedding_dim)
         self.fc = tf.keras.layers.Dense(embedding_dim)
 
-    @tf.function
     def call(self, x, training=True):
         x = self.fc(x)
         x = tf.nn.relu(x)
@@ -75,9 +72,7 @@ class RNN_Decoder(tf.keras.Model):
 
         self.attention = Attention(self.units)
 
-    @tf.function
-    def call(self, inputs, training=True):
-        x, features, hidden = inputs
+    def call(self, x, features, hidden, training=True):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention((features, hidden))
 
@@ -101,76 +96,47 @@ class RNN_Decoder(tf.keras.Model):
 
         return x, state, attention_weights
 
+    def reset_state(self, batch_size):
+        return tf.zeros((batch_size, self.units))
 
-class EDModel(tf.keras.Model):
-    def __init__(self, embedding_dim, units, vocab_size, tokenizer):
-        super(EDModel, self).__init__()
-        self.encoder = CNN_Encoder(embedding_dim)
-        self.decoder = RNN_Decoder(embedding_dim, units, vocab_size)
-        self.decoder_units = units
-        self.optimizer = tf.keras.optimizers.Adam()
-        self.loss_func = loss_function
+class ImageCaptioner(tf.Module):
+    def __init__(self, encoder, decoder , image_features_extract_model, tokenizer):
+        self.encoder = encoder
+        self.decoder = decoder
+        self.image_features_extract_model = image_features_extract_model
         self.tokenizer = tokenizer
-        self.trainable_vars = (
-            self.encoder.trainable_variables + self.decoder.trainable_variables
+
+    @tf.function
+    def caption(self, img_tensor, max_length=None, attn_shape=None):
+        attention_plot = np.zeros((max_length, attn_shape))
+        hidden = self.decoder.reset_state(batch_size=target.shape[0])
+        temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
+        img_tensor_val = self.image_features_extract_model(temp_input)
+        img_tensor_val = tf.reshape(
+            img_tensor_val, (img_tensor_val.shape[0], -1, img_tensor_val.shape[3])
         )
+        features = self.encoder(img_tensor_val)
 
-    def call(self, img_tensor, target, training=True,max_length=None, attn_shape=None, mode="train"):
-        if mode == "train":
-            loss = 0
+        dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
+        result = []
 
-            # initializing the hidden state for each batch
-            # because the captions are not related from image to image
-            #hidden = self.decoder.reset_state(batch_size=target.shape[0])
-            hidden = tf.zeros((target.shape[0], self.decoder_units))  
-            dec_input = tf.expand_dims(
-                [self.tokenizer.word_index["<start>"]] * target.shape[0], 1
+        for i in range(max_length):
+            predictions, hidden, attention_weights = self.decoder(
+                dec_input, features, hidden
             )
 
-            features = self.encoder(img_tensor)
+            attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
 
-            for i in range(1, target.shape[1]):
-                # passing the features through the decoder
-                predictions, hidden, _ = self.decoder([dec_input, features, hidden])
+            predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
+            result.append(self.tokenizer.index_word[predicted_id])
 
-                loss += self.loss_func(target[:, i], predictions)
+            if self.tokenizer.index_word[predicted_id] == "<end>":
+                return result, attention_plot
 
-                # using teacher forcing
-                dec_input = tf.expand_dims(target[:, i], 1)
+            dec_input = tf.expand_dims([predicted_id], 0)
 
-            return loss, dec_input
-        else:
-            attention_plot = np.zeros((max_length, attn_shape))
-
-            #hidden = self.decoder.reset_state(batch_size=1)
-            hidden = tf.zeros((1, self.decoder_units)) 
-            temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
-            img_tensor_val = image_features_extract_model(temp_input)
-            img_tensor_val = tf.reshape(
-                img_tensor_val, (img_tensor_val.shape[0], -1, img_tensor_val.shape[3])
-            )
-            features = self.encoder(img_tensor_val)
-
-            dec_input = tf.expand_dims([self.tokenizer.word_index["<start>"]], 0)
-            result = []
-
-            for i in range(max_length):
-                predictions, hidden, attention_weights = self.decoder(
-                    [dec_input, features, hidden]
-                )
-
-                attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
-
-                predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
-                result.append(self.tokenizer.index_word[predicted_id])
-
-                if self.tokenizer.index_word[predicted_id] == "<end>":
-                    return result, attention_plot
-
-                dec_input = tf.expand_dims([predicted_id], 0)
-
-            attention_plot = attention_plot[: len(result), :]
-            return result, attention_plot
+        attention_plot = attention_plot[: len(result), :]
+        return result, attention_plot
 
     def plot_attention(self, image, result, attention_plot):
         temp_image = np.array(Image.open(image))
