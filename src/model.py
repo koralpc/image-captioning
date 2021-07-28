@@ -107,7 +107,7 @@ class ImageCaptioner(tf.Module):
         self.tokenizer = tokenizer
 
     @tf.function
-    def caption(self, img_tensor, max_length=None, attn_shape=None):
+    def caption(self, img_tensor, max_length=50, attn_shape=64):
         attention_plot = np.zeros((max_length, attn_shape))
         hidden = self.decoder.reset_state(batch_size=1)
         temp_input = tf.expand_dims(load_image(img_tensor)[0], 0)
